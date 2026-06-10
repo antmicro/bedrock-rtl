@@ -94,7 +94,7 @@ br_verilog_sim_test_tools_suite(
     # references to undeclared fork sync objects such as `__Vfork_25__sync`.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_amba_axi_shrinker_tb"],
 )

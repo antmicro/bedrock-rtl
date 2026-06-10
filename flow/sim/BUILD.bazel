@@ -441,7 +441,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_arb_lru_tb"],
 )
 
@@ -520,7 +520,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_mux_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_mux_lru_tb"],
 )
 
@@ -599,7 +599,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_mux_lru_stable_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_mux_lru_stable_tb"],
 )
 
@@ -678,7 +678,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_burst_mux_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_burst_mux_lru_tb"],
 )
 
@@ -757,7 +757,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
 
@@ -867,7 +867,7 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_xbar_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+    tools = ["vcs", "verilator"],
     deps = [":br_flow_xbar_lru_tb"],
 )
 

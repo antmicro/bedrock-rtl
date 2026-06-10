@@ -118,7 +118,7 @@ br_verilog_sim_test_tools_suite(
     # `RegisterMemOutputs=1` and `RegisterResponseOutputs=0`.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_csr_mem_interface_tb"],
 )

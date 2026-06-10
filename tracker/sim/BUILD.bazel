@@ -50,7 +50,7 @@ br_verilog_sim_test_tools_suite(
     # `NumDeallocPorts=1`.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_tracker_freelist_tb"],
 )
