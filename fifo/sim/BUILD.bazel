@@ -203,7 +203,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_flops_tb"],
 )
@@ -234,7 +234,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_flops_tb"],
 )
@@ -284,7 +284,7 @@ br_verilog_sim_test_tools_suite(
     # `eb1_frads1_rpo0_rpo0`.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_flops_push_credit_tb"],
 )
@@ -354,7 +354,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
@@ -421,7 +421,7 @@ br_verilog_sim_test_tools_suite(
     # `drads1_d5_nf4_nllpf1_nrp1_nwp1_prads1_rd0_rpo0_sbd1_w8`.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
@@ -468,7 +468,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_shared_pstatic_flops_tb"],
 )
@@ -522,7 +522,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_shared_pstatic_flops_push_credit_tb"],
 )
@@ -585,7 +585,7 @@ br_verilog_sim_test_tools_suite(
     # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb"],
 )
