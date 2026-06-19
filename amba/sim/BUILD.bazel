@@ -98,3 +98,79 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_amba_axi_shrinker_tb"],
 )
+
+verilog_library(
+    name = "br_amba_atb_funnel_sim_pkg",
+    srcs = ["br_amba_atb_funnel_sim_pkg.sv"],
+)
+
+verilog_library(
+    name = "br_amba_atb_funnel_driver",
+    srcs = ["drivers/br_amba_atb_funnel_driver.sv"],
+    deps = [
+        ":br_amba_atb_funnel_sim_pkg",
+        "//amba/rtl:br_amba_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_atb_funnel_input_monitor",
+    srcs = ["monitors/br_amba_atb_funnel_input_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_atb_funnel_scoreboard",
+    srcs = ["monitors/br_amba_atb_funnel_scoreboard.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_atb_funnel_tb",
+    srcs = ["br_amba_atb_funnel_tb.sv"],
+    deps = [
+        ":br_amba_atb_funnel_driver",
+        ":br_amba_atb_funnel_input_monitor",
+        ":br_amba_atb_funnel_scoreboard",
+        ":br_amba_atb_funnel_sim_pkg",
+        "//amba/rtl:br_amba_atb_funnel",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_atb_funnel_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_atb_funnel_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_atb_funnel_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumSources": [
+            "2",
+            "4",
+        ],
+        "RegisterAtReady": [
+            "0",
+            "1",
+        ],
+        "UserWidth": [
+            "1",
+            "3",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_atb_funnel_tb"],
+)
