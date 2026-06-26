@@ -231,6 +231,8 @@ jobs:
       # Don't need --test_output=summary to suppress log output because Verilator is open source.
       run: |
         set +e
+        which verilator
+        verilator --version
         bazel query 'tests(//...) intersect attr(tags, "verilator", //...) intersect attr(tags, "sim", //...)' > .bazel-test-verilator.targets
         xargs -a .bazel-test-verilator.targets bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress 2>&1 | tee .bazel-test-verilator.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
