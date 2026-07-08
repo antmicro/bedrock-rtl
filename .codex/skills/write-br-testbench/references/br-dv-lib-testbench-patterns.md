@@ -61,6 +61,7 @@ For a simple valid-only BFM with no backpressure:
 ```systemverilog
 virtual task drive_item(input my_item item);
   if (item == null) begin
+    @(posedge clk_rst_vif.clk);
     drive_idle();
     return;
   end
@@ -75,6 +76,8 @@ Notes:
 
 - Use `clk_rst_vif.clk` for timing.
 - Use NBAs when driving interface signals.
+- Put all driven signals into a known idle state in the constructor and on a
+  `null` item.
 - Do not force an explicit valid-low cycle after every item; the sequence sends
   `null` at end-of-sequence and the driver idle path handles quiescence.
 - Do not add idle-cycle parameters to the driver unless they are part of the
@@ -109,6 +112,18 @@ endfunction
 Track IDs or timestamps in items when value aliasing, ordering ambiguity, or
 latency coverage could hide bugs.
 
+For fixed-latency datapaths, have monitors stamp each observed transaction with
+a monotonically increasing ID and observed cycle. Let the scoreboard check ID,
+data, exact latency, and empty expected/actual queues. This catches repeated
+payload aliases and off-by-one pipeline errors that pure data comparison can
+miss.
+
+When an input interface has semantic ports, such as depth tiles or lanes, keep
+the driver responsible for legal pin-level encoding and the monitor responsible
+for publishing one item per observed semantic transaction. Leave illegal
+integration traffic to RTL assertions or FPV unless the test is explicitly
+negative.
+
 ## Randomization
 
 Use simple constraints for 50/50 booleans:
@@ -123,6 +138,22 @@ void'(item.randomize() with {
 
 A plain unconstrained `rand bit has_addr;` is already 50/50; avoid noisy
 `dist {0 := 1, 1 := 1}` unless the weighting is intentionally nonuniform.
+
+Use sequence fill helpers for directed traffic modes instead of adding policy
+to the driver. For example, a valid-only datapath can use an enum for random,
+forced idle, and forced active traffic while sharing one item creation path.
+
+## Parameter Sweeps
+
+Keep Bazel suites representative and named by purpose. For pipelined tiled
+datapaths, prefer separate suites for:
+
+- zero and nonzero latency stages,
+- tile fan-in/fan-out behavior,
+- edge combinations where one dimension has zero stages,
+- a deeper latency case,
+- minimum data width,
+- odd or non-power-of-two legal shapes.
 
 ## Validation
 

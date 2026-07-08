@@ -39,6 +39,11 @@ Keep roles crisp:
 - Scoreboards own prediction, semantic port routing, matching, latency checks,
   and data-integrity checks.
 
+Keep the monitor/scoreboard boundary simple: monitors publish only observed
+valid transactions, and scoreboards consume those transactions. Do not make the
+scoreboard resample live DUT interfaces to decide whether a monitor item was
+valid.
+
 ## Implementation Workflow
 
 1. Create a DUT-local package directory under `*/sim/<dut>_tb/`.
@@ -56,6 +61,13 @@ Keep roles crisp:
 8. Run the narrowest Bazel build/sim targets and `pre-commit run` on touched
    files.
 
+When the DUT is parameterized, use the TB module parameters as the single source
+of truth. Thread those parameters through interfaces, env, agents, monitors,
+scoreboards, items, and Bazel suites. Avoid magic maximum widths in items; make
+item payload fields parameterized by the DUT width, then verify with
+elaboration and Verilator because parameterized class specializations can expose
+tool issues.
+
 ## Coding Rules
 
 - Use positive clock edges only in drivers and monitors.
@@ -64,39 +76,89 @@ Keep roles crisp:
   temporary delay is required, leave a precise TODO explaining the tool issue.
 - Do not bake traffic policy into drivers. Put policy in sequence constraints or
   `fill_*` helpers.
+- Prefer one reusable sequence fill path with knobs or modes over several
+  near-identical fill tasks. Add a separate helper only when sharing would make
+  the base helper genuinely convoluted.
+- After disabling or killing a sequence, explicitly drive the BFM idle before
+  draining and checking the scoreboard.
 - Prefer random constraints for item legality and traffic knobs instead of
   ad-hoc post-random mutation.
+- Keep monitors passive: use `#1step` after the positive edge only for sampling
+  values driven by NBAs, and never drive DUT inputs from monitors.
+- Let monitors filter invalid and reset cycles before publishing items. If an
+  item reaches the scoreboard, treat it as an observed transaction.
+- Put monitor-assigned IDs, observed cycles, or timestamps into items whenever
+  ordering, latency, or repeated payload values could otherwise hide bugs.
+- Keep scoreboard inputs as semantic ports such as `write_in` and `write_out`.
+  Use expected and actual queues with short names such as `exp_q` and `act_q`.
+  Avoid callback-time assumptions; `write_*` methods may run after the sampled
+  interface cycle, so base ordering and latency checks on item fields captured
+  by monitors.
+- Keep common runners generic. Scenario-specific helpers such as reset watchers
+  should be forked in that scenario before calling the common runner, then
+  disabled after it returns.
 - Keep overrideable testbench parameters meaningful for coverage; derive helper
   widths and latencies with `localparam`.
 - Do not enable waves by default. Add plusarg-based VCD dumping only when useful
   and keep Bazel `waves = True` out of tests.
+- Use plusarg-based VCD/FST dumping only when the local pattern supports it; do
+  not leave unconditional dump blocks in the TB.
+
+## Scenario and Coverage Guidance
+
+For datapath or pipeline DUTs, include directed scenarios before random traffic:
+
+- smoke: one valid transaction after reset,
+- idle-data: drive payload data while valid is low,
+- reset-during-valid: assert reset when valid traffic is actually observed,
+- continuous stress: back-to-back valid transactions with no gaps,
+- random batches: mixed valid and idle cycles.
+
+For parameter sweeps, include edge cases around internal calculations:
+
+- zero-stage combinational paths with real tiling,
+- one dimension pipelined while the other is combinational,
+- deeper latency with tiling active,
+- odd and even tile counts,
+- minimal widths such as `Width=1`,
+- non-power-of-two widths that still satisfy DUT static constraints.
 
 ## Standard Scenario Skeleton
 
 ```systemverilog
-task automatic run_all_tests();
-  br_dv_context ctx;
-  my_env env;
+task automatic run_sequence_and_check(input br_dv_context ctx, input my_env env);
+  fork : sequence_run_fork
+    env.input_sequence.start();
+  join_none
 
-  ctx = new(test);
-  env = new(ctx, clk_rst_if, input_if, output_if);
-
-  env.clk_rst_driver.reset_dut();
-  env.clk_rst_driver.wait_cycles();
-
-  for (int i = 0; i < SequenceIterations; i++) begin
-    env.input_sequence.fill_random($urandom_range(1, MaxTransactionsPerIteration));
-
-    fork
-      env.input_sequence.start();
-    join_none
-
-    ctx.wait_for_sequences(env.clk_rst_driver, SequenceTimeoutCycles);
-    env.clk_rst_driver.wait_cycles(DrainCycles);
-  end
-
+  ctx.wait_for_sequences(env.clk_rst_driver, SequenceTimeoutCycles);
+  disable sequence_run_fork;
+  env.input_driver.drive_item(null);
+  env.clk_rst_driver.wait_cycles(DrainCycles);
   env.scoreboard.check_all();
+endtask
+
+task automatic run_reset_test(input br_dv_context ctx, input my_env env);
+  env.input_sequence.fill_random(ResetSequenceItems, ForceValidOrDirectedMode);
+  fork : reset_on_valid_fork
+    reset_on_next_valid(env);
+  join_none
+  run_sequence_and_check(ctx, env);
+  disable reset_on_valid_fork;
 endtask
 ```
 
 Use `BR_DEFINE_TEST` and `BR_RUN_TEST` for test creation.
+
+## Validation
+
+Run validation proportional to the change:
+
+1. Elaborate the TB.
+2. Run one or more focused Verilator targets, especially any new or risky
+   parameter sets.
+3. Run the full affected Verilator suite when class specializations, monitors,
+   scoreboards, reset flow, or Bazel suites changed.
+4. Run touched-file `pre-commit`.
+
+If Verilator fails, paste the relevant failure log in the chat before fixing it.
