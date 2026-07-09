@@ -68,6 +68,10 @@ item payload fields parameterized by the DUT width, then verify with
 elaboration and Verilator because parameterized class specializations can expose
 tool issues.
 
+For parameterized class benches, define DUT-specific item/env typedefs once near
+the TB module parameters and pass those types through the env and agents. Avoid
+repeating long class specializations in task signatures and scoreboard sinks.
+
 ## Coding Rules
 
 - Use positive clock edges only in drivers and monitors.
@@ -89,6 +93,10 @@ tool issues.
   item reaches the scoreboard, treat it as an observed transaction.
 - Put monitor-assigned IDs, observed cycles, or timestamps into items whenever
   ordering, latency, or repeated payload values could otherwise hide bugs.
+- When capturing or comparing parameterized packed data, keep both sides in the
+  same DUT-width item type. Avoid `Width'(...)` casts for data values; for packed
+  tile arrays, assign through a typed `logic [Width-1:0]` local if that is the
+  clearest tool-portable conversion.
 - Keep scoreboard inputs as semantic ports such as `write_in` and `write_out`.
   Use expected and actual queues with short names such as `exp_q` and `act_q`.
   Avoid callback-time assumptions; `write_*` methods may run after the sampled
@@ -98,7 +106,10 @@ tool issues.
   should be forked in that scenario before calling the common runner, then
   disabled after it returns.
 - Keep overrideable testbench parameters meaningful for coverage; derive helper
-  widths and latencies with `localparam`.
+  widths, latencies, drain counts, and sequence timeouts with `localparam`.
+  Include every directed and random sequence length in timeout sizing, especially
+  user-overridable transaction-count parameters. Remove unused derived
+  localparams unless they feed a check or implementation.
 - Do not enable waves by default. Add plusarg-based VCD dumping only when useful
   and keep Bazel `waves = True` out of tests.
 - Use plusarg-based VCD/FST dumping only when the local pattern supports it; do
@@ -156,9 +167,16 @@ Run validation proportional to the change:
 
 1. Elaborate the TB.
 2. Run one or more focused Verilator targets, especially any new or risky
-   parameter sets.
+   parameter sets. Include odd/non-power-of-two widths when data packing,
+   casting, or item specialization changed.
 3. Run the full affected Verilator suite when class specializations, monitors,
    scoreboards, reset flow, or Bazel suites changed.
 4. Run touched-file `pre-commit`.
 
 If Verilator fails, paste the relevant failure log in the chat before fixing it.
+
+When reviewing a finished bench, check that scoreboards compare all relevant
+semantic fields, latency expectations account for all parameter configurations,
+reset helpers do not rely on simulator scheduling side effects, comments still
+match behavior, and timeout/drain constants cover the largest generated
+scenario.
